@@ -1,0 +1,12 @@
+{
+  "name": "y",
+  "version": "y",
+  "description": "Some code tests of scrapping with puppeteer",
+  "main": "y",
+  "author": "teknus",
+  "license": "y",
+  "private": false,
+  "dependencies": {
+    "puppeteer-core": "^1.11.0"
+  }
+}
