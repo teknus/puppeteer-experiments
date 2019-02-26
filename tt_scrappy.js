@@ -1,6 +1,5 @@
 const puppeteer = require("puppeteer")
 const html2json = require('html2json').html2json;
-const util = require('util')
 const fs = require("fs")
 
 let url = "";
