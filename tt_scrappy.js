@@ -3,7 +3,7 @@ const html2json = require('html2json').html2json;
 const util = require('util')
 const fs = require("fs")
 
-let url = "https://www.twitter.com/t3knus";
+let url = "";
 (async () => {
 	const browser = await puppeteer.launch({
 		executablePath: 'chromium-browser',
