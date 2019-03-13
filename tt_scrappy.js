@@ -4,7 +4,7 @@ const fs = require("fs")
 
 let url = "https://twitter.com/";
 let usr_commandline = process.argv.slice(2);
-let usr = "";
+let usr = usr_commandline;
 (async () => {
 	const browser = await puppeteer.launch({
 		executablePath: '/usr/bin/chromium-browser',
