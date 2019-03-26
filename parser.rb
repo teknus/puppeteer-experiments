@@ -27,6 +27,7 @@ ARGV.each do |arg|
   doc.css('li div div div a', "tweet-timestamp js-permalink js-nav js-tooltip").each do |atag|
     info = ""
     i = 0
+    #TODO find some way to cancat the same tweet in a string
     for link, content in atag do
       if "#{link}" == "href"  
         if "#{content}".match(/\/[A-Za-z0-9_]+$/) and not ("#{content}".match(/\/[A-Za-z0-9_]+\/[A-Za-z0-9_]+\/[A-Za-z0-9_]+$/) or "#{content}".match(/https/) ) 
