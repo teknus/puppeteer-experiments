@@ -20,7 +20,7 @@ def parse_tweet(doc, user)
     end
 
     page.each do |link, content|
-      tweet['user'] = content.to_s if link.to_s == 'data-screen-name'
+      tweet['user'] = content.to_s if link.to_s == 'data-name'
     end
 
     page.each do |link, content|
