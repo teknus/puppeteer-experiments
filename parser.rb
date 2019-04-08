@@ -9,15 +9,12 @@ def parse_tweet(doc, user)
   ### Tweet Text'
   selector = 'TweetTextSize TweetTextSize--normal js-tweet-text tweet-text'
 
-  tweet['retweet'] = false
   doc.css('li div', selector).each do |page|
-    page.each do |link, _content|
-      tweet['retweet'] = true if link.to_s == 'data-retweet-id'
+    page.each do |link, content|
+      tweet['path'] = content.to_s if link.to_s == 'data-permalink-path'
     end
-  end
+    tweet['retweet'] = !tweet['path'].include?("#{user}")
 
-  tweet['metions'] = []
-  doc.css('li div', selector).each do |page|
     page.each do |link, content|
       tweet['metions'] = content.to_s.split(' ') if link.to_s == 'data-mentions'
     end
@@ -25,14 +22,36 @@ def parse_tweet(doc, user)
     page.each do |link, content|
       tweet['user'] = content.to_s if link.to_s == 'data-screen-name'
     end
+
+    page.each do |link, content|
+      tweet['data-id'] = content.to_s if link.to_s == 'data-tweet-id'
+    end
   end
+  
   doc.css('li div div div p', selector).each do |page|
+
     if page.content.to_s.include?('pic.twitter.com')
       splited = page.content.split('pic.twitter.com')
       tweet['text'] = splited[0] + ' pic.twitter.com' + splited[1]
     else
       tweet['text'] = page.content.to_s
     end
+    if page.content.to_s.include?('http')
+      splited = page.content.split('http')
+      tweet['text'] = splited[0] + ' http' + splited[1]
+    else
+      tweet['text'] = page.content.to_s
+    end
+    list_hash = []
+    if tweet['text'].include?('#')
+      list = tweet['text'].split(" ")
+      list.each do |item|
+        if item.start_with?("#")
+          list_hash.push(item)
+        end
+      end
+    end
+    tweet['hashtag'] = list_hash
   end
 
   ## tweet actions
@@ -45,18 +64,12 @@ def parse_tweet(doc, user)
     tweet['actions'] = { 'like': aux_list[0], 'rt': aux_list[1], 'reply': aux_list[2] }
   end
 
-  # Meta data
-  doc.css('li div div div a', 'tweet-timestamp js-permalink js-nav js-tooltip').each do |atag|
-    # TODO: find some way to cancat the same tweet in a string
+  doc.css('li div div div span', 'tweet-timestamp js-permalink js-nav js-tooltip').each do |atag|
     atag.each do |link, content|
-      next unless link.to_s == 'title'
-      if content.to_s.include?('http')
-        next
-      else
-        tweet['time'] = content.to_s
+      next unless link.to_s == 'data-time-ms'
+        tweet['time-ms'] = content.to_i
       end
     end
-  end
   tweet
 end
 
@@ -67,8 +80,6 @@ ARGV.each do |arg|
   json_file = File.read("#{user}.json")
   user_data = JSON.parse(json_file)
   user_data['tweets'] = []
-  meta = []
-  info = []
   doc.css('li', 'tweet').each do |page|
     page.each do |link, _content|
       next unless link.to_s == 'data-item-id'
