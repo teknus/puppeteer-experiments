@@ -41,9 +41,11 @@ def parse_tweet(doc, user)
       tweet['text'] = page.content.to_s
     end
     if page.content.to_s.include?('http')
+      tweet['link'] = true
       splited = page.content.split('http')
       tweet['text'] = splited[0] + ' http' + splited[1]
     else
+      tweet['link'] = false
       tweet['text'] = page.content.to_s
     end
     list_hash = []
