@@ -1,5 +1,7 @@
 require 'nokogiri'
 require 'json'
+require 'set'
+
 
 def parse_tweet(doc, user)
   aux_list = []
@@ -79,10 +81,33 @@ def parse_tweet(doc, user)
   tweet
 end
 
+def parse_followers(doc)
+  data = Set.new
+  doc.css('div div div div div a', "ProfileCard-avatarLink js-nav js-tooltip").each do |page|
+    page.each do |link, content|
+      if link.to_s == "href"
+        c = content.to_s
+        if c.count("/") == 1
+          puts c
+          unless data.include?(c)
+            data << c
+          end
+        end
+      end
+    end
+  end  
+  puts data
+  return data.to_a
+end
+
+
 # Fetch and parse HTML document
 ARGV.each do |arg|
   user = arg
   doc = Nokogiri::HTML(File.read("info_#{user}.html"))
+  following = Nokogiri::HTML(File.read("following_#{user}.html"))
+  followers = Nokogiri::HTML(File.read("followers_#{user}.html"))
+  likes = Nokogiri::HTML(File.read("likes_#{user}.html"))
   json_file = File.read("#{user}.json")
   user_data = JSON.parse(json_file)
   user_data['tweets'] = []
@@ -91,10 +116,11 @@ ARGV.each do |arg|
       next unless link.to_s == 'data-item-id'
 
       doc_tweet = Nokogiri::HTML(page.to_s)
-      user_data['tweets'].push(parse_tweet(doc_tweet, user))
+      #user_data['tweets'].push(parse_tweet(doc_tweet, user))
     end
   end
-  File.open("#{user}.json", 'w') do |f|
-    f.write(user_data.to_json)
-  end
+ parse_followers(followers).length
+  # File.open("#{user}.json", 'w') do |f|
+  #   f.write(user_data.to_json)
+  # end
 end
