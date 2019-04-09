@@ -19,9 +19,13 @@ async function scrapp(url, usr, data) {
 		width: 1366,
 		height: 768
 	});
+	//get home pagee data 
+	await get_home_data(page, url, usr, data);
+	save("", usr, JSON.stringify(data), postfix = ".json");
+	
 	const navigationPromise = page.waitForNavigation();
 
-	await page.goto('https://twitter.com/login');
+	await page.goto(url + '/login');
 	await page.waitForSelector('#page-container > div > div.signin-wrapper > form > fieldset > div:nth-child(2) > input');
 
 	await page.type('#page-container > div > div.signin-wrapper > form > fieldset > div:nth-child(2) > input', user_name);
@@ -30,13 +34,18 @@ async function scrapp(url, usr, data) {
 	await page.click('#page-container > div > div.signin-wrapper > form > div.clearfix > button');
 	await navigationPromise;
 	console.log("Logged");
-	await get_home_data(page, url, usr, data);
-
-	save("", usr, JSON.stringify(data), postfix = ".json");
+	await page.waitForSelector('#choose-photo > a > div');
+	//get followers
+	await get_followers(page,url, usr);
+	//get following
+	await get_following(page,url, usr);
+	// //get likes
+	await get_liked(page,url, usr);
 	browser.close();
 }
 
 async function get_home_data(page, url, usr, data) {
+	console.log('Getting home page');
 	await page.goto(url + usr);
 	let username = await page.evaluate(() => {
 		return document.querySelector("#page-container > div.AppContainer > div > div > div.Grid-cell.u-size1of3.u-lg-size1of4 > div > div > div > div.ProfileHeaderCard > h1 > a").textContent;
@@ -140,8 +149,10 @@ async function scrollPageToBottom(page, scrollStep = 3000, scrollDelay = 300) {
 	return lastPosition
 }
 
-async function get_following(page,url, usr, data) {
+async function get_following(page,url, usr) {
+	console.log("Getting following");
 	await page.goto(url + usr + "/following");
+	await page.waitForSelector('#page-container > div.AppContainer > div > div > div.Grid-cell.u-size2of3.u-lg-size3of4 > div > div:nth-child(2) > div.GridTimeline');
 	console.log("starting scrolling");
 	loaded = false;
 	actualPosition = 0;
@@ -157,13 +168,15 @@ async function get_following(page,url, usr, data) {
 		actualPosition = lastPosition;
 	}
 	let following = await page.evaluate(() => {
-		return document.querySelector("#page-container > div.AppContainer > div > div > div.Grid-cell.u-size2of3.u-lg-size3of4 > div").innerHTML;
+		return document.querySelector("#page-container > div.AppContainer > div > div > div.Grid-cell.u-size2of3.u-lg-size3of4 > div > div:nth-child(2) > div.GridTimeline").innerHTML;
 	});
-
+	save("following_", usr, following, postfix = ".html");
 }
 async function get_followers(page,url, usr, data) {
+	console.log("Getting followers");
 	await page.goto(url + usr + "/followers");
 	console.log("starting scrolling");
+	await page.waitForSelector('#page-container > div.AppContainer > div > div > div.Grid-cell.u-size2of3.u-lg-size3of4 > div > div:nth-child(2) > div.GridTimeline > div.GridTimeline-items.has-items');
 	loaded = false;
 	actualPosition = 0;
 	while (!loaded) {
@@ -177,14 +190,35 @@ async function get_followers(page,url, usr, data) {
 		}
 		actualPosition = lastPosition;
 	}
-	let followers = await page.evaluate(() => {
-		return document.querySelector("#page-container > div.AppContainer > div > div > div.Grid-cell.u-size2of3.u-lg-size3of4 > div").innerHTML;
-	});
 
+	let followers = await page.evaluate(() => {
+		return document.querySelector("#page-container > div.AppContainer > div > div > div.Grid-cell.u-size2of3.u-lg-size3of4 > div > div:nth-child(2) > div.GridTimeline > div.GridTimeline-items.has-items").innerHTML;
+	});
+	save("followers_", usr, followers, postfix = ".html");
 }
 
-async function get_liked(page,url, usr, data){
-	//TODO similar to home page
+async function get_liked(page,url, usr){
+	console.log("Getting likes");
+	await page.goto(url + usr + "/likes");
+	console.log("starting scrolling");
+	await page.waitForSelector('#page-container > div.AppContainer > div > div > div.Grid-cell.u-size2of3.u-lg-size3of4 > div > div.Grid-cell.u-lg-size2of3');
+	loaded = false;
+	actualPosition = 0;
+	while (!loaded) {
+		console.log("loading...");
+		const lastPosition = await scrollPageToBottom(page);
+		console.log(actualPosition, lastPosition);
+
+		if (lastPosition == actualPosition) {
+			console.log("loaded");
+			loaded = true;
+		}
+		actualPosition = lastPosition;
+	}
+	let likes = await page.evaluate(() => {
+		return document.querySelector("#page-container > div.AppContainer > div > div > div.Grid-cell.u-size2of3.u-lg-size3of4 > div > div.Grid-cell.u-lg-size2of3").innerHTML;
+	});
+	save("likes_", usr, likes, postfix = ".html");
 }
 
 //Start here
