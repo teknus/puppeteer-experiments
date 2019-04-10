@@ -5,8 +5,8 @@ const fs = require("fs")
 let url = "https://twitter.com/";
 let usr_commandline = process.argv.slice(2);
 let usr = usr_commandline;
-let user_name = 'JooII19';
-let password = '1234567890qwerty';
+let user_name = '';
+let password = '';
 data = {}
 
 async function scrapp(url, usr, data) {
@@ -19,14 +19,12 @@ async function scrapp(url, usr, data) {
 		width: 1366,
 		height: 768
 	});
-	//get home pagee data 
 	await get_home_data(page, url, usr, data);
-	save("", usr, JSON.stringify(data), postfix = ".json");
-	
+
 	const navigationPromise = page.waitForNavigation();
 
 	await page.goto(url + '/login');
-	await page.waitForSelector('#page-container > div > div.signin-wrapper > form > fieldset > div:nth-child(2) > input');
+	await page.waitForSelector('#page-container > div > div.signin-wrapper > form > fieldset > div:nth-child(2) > input',{ timeout: 50000 });
 
 	await page.type('#page-container > div > div.signin-wrapper > form > fieldset > div:nth-child(2) > input', user_name);
 	await page.type('#page-container > div > div.signin-wrapper > form > fieldset > div:nth-child(3) > input', password);
@@ -36,11 +34,12 @@ async function scrapp(url, usr, data) {
 	console.log("Logged");
 	await page.waitForSelector('#choose-photo > a > div');
 	//get followers
-	await get_followers(page,url, usr);
+	await get_followers(page, url, usr);
 	//get following
-	await get_following(page,url, usr);
+	await get_following(page, url, usr);
 	// //get likes
-	await get_liked(page,url, usr);
+	//await get_liked(page,url, usr);
+	//get home pagee data 
 	browser.close();
 }
 
@@ -67,7 +66,13 @@ async function get_home_data(page, url, usr, data) {
 	console.log("starting scrolling");
 	loaded = false;
 	actualPosition = 0;
+	count = 0;
 	while (!loaded) {
+		if (count >= 1000) {
+			break;
+		}
+		count += 1;
+		console.log(count);
 		console.log("loading...");
 		const lastPosition = await scrollPageToBottom(page);
 		console.log(actualPosition, lastPosition);
@@ -99,8 +104,8 @@ async function get_home_data(page, url, usr, data) {
 		lcoation: lcoation,
 		create_at: create_at,
 		tweets: {},
-		//end: end,
 	};
+	save("", usr, JSON.stringify(data), postfix = ".json");
 }
 
 
@@ -149,16 +154,22 @@ async function scrollPageToBottom(page, scrollStep = 3000, scrollDelay = 300) {
 	return lastPosition
 }
 
-async function get_following(page,url, usr) {
+async function get_following(page, url, usr) {
 	console.log("Getting following");
 	await page.goto(url + usr + "/following");
 	await page.waitForSelector('#page-container > div.AppContainer > div > div > div.Grid-cell.u-size2of3.u-lg-size3of4 > div > div:nth-child(2) > div.GridTimeline');
 	console.log("starting scrolling");
 	loaded = false;
 	actualPosition = 0;
+	count = 0;
 	while (!loaded) {
+		if (count >= 1000) {
+			break;
+		}
+		count += 1;
+		console.log(count);
 		console.log("loading...");
-		const lastPosition = await scrollPageToBottom(page);
+		const lastPosition = await scrollPageToBottom(page, scrollStep = 3000, scrollDelay = 1500);
 		console.log(actualPosition, lastPosition);
 
 		if (lastPosition == actualPosition) {
@@ -172,16 +183,22 @@ async function get_following(page,url, usr) {
 	});
 	save("following_", usr, following, postfix = ".html");
 }
-async function get_followers(page,url, usr, data) {
+async function get_followers(page, url, usr, data) {
 	console.log("Getting followers");
 	await page.goto(url + usr + "/followers");
 	console.log("starting scrolling");
 	await page.waitForSelector('#page-container > div.AppContainer > div > div > div.Grid-cell.u-size2of3.u-lg-size3of4 > div > div:nth-child(2) > div.GridTimeline > div.GridTimeline-items.has-items');
 	loaded = false;
 	actualPosition = 0;
+	count = 0;
 	while (!loaded) {
+		if (count >= 1000) {
+			break;
+		}
+		count += 1;
+		console.log(count);
 		console.log("loading...");
-		const lastPosition = await scrollPageToBottom(page);
+		const lastPosition = await scrollPageToBottom(page, scrollStep = 3000, scrollDelay = 1500);
 		console.log(actualPosition, lastPosition);
 
 		if (lastPosition == actualPosition) {
@@ -197,14 +214,20 @@ async function get_followers(page,url, usr, data) {
 	save("followers_", usr, followers, postfix = ".html");
 }
 
-async function get_liked(page,url, usr){
+async function get_liked(page, url, usr) {
 	console.log("Getting likes");
 	await page.goto(url + usr + "/likes");
 	console.log("starting scrolling");
 	await page.waitForSelector('#page-container > div.AppContainer > div > div > div.Grid-cell.u-size2of3.u-lg-size3of4 > div > div.Grid-cell.u-lg-size2of3');
 	loaded = false;
 	actualPosition = 0;
+	count = 0;
 	while (!loaded) {
+		if (count >= 1000) {
+			break;
+		}
+		count += 1;
+		console.log(count);
 		console.log("loading...");
 		const lastPosition = await scrollPageToBottom(page);
 		console.log(actualPosition, lastPosition);
