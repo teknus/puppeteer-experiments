@@ -1,72 +1,38 @@
-# from web_scrapper import open_browser, login_twitter, scroll
-from bs4 import BeautifulSoup
-import requests
+import numpy as np
+import pandas as pd
+from web_scrapper import scroll
 
-def load_user_info(soup):
-    user = {}
-    for div in soup.findAll('div'):
-        if div.has_attr('class'):
-            if div['class'][0] == 'fullname':
-                user['fullname'] = div.text.strip()
-            if div['class'][0] == 'location':
-                user['location'] = div.text.strip()
-    return user
+# Now that the page is fully scrolled, grab the source code.
+# browser = scroll(max_interations=5,url="https://twitter.com/search?l=&q=esquerda%20OR%20direita%20since%3A2013-01-01%20until%3A2013-12-31&src=typd&lang=pt", delay=1)
+browser = scroll(max_interations=5, url="https://twitter.com/t3knus", delay=1)
+source_data = browser.page_source
+tweets = browser.find_elements_by_class_name('tweet-text')
+for index, tweet in zip(list(range(0, len(tweets) - 1)), tweets):
+    print("[0{}] {}:{}".format(index, tweet.text, tweet.get_attribute('lang')))
 
-def link_button(soup):
-    link = ''
-    for a in soup.findAll('a'):
-        if '?max_id' in a['href']:
-            link = a['href']
-    if link == '':
-        return None
-    else:
-        return link
+elements = browser.find_elements_by_xpath(
+    '//*[@id="page-container"]/div[2]/div/div/div[1]/div/div/div/div[1]/h1/a')
+bio = browser.find_elements_by_xpath(
+    '//*[@id="page-container"]/div[2]/div/div/div[1]/div/div/div/div[1]/p')
+tts = browser.find_elements_by_class_name('tweet')
+for element in elements:
+    print("Name: {}".format(element.text))
+for b in bio:
+    print("Bio: {}".format(b.text))
 
-def load_soup(url):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text,'html.parser')
-    return soup
+#compare name in perm link and user to discover a retweet
+for t in tts:
+    print("type: {}".format(t.get_attribute('data-permalink-path')))
+print("\n")
+#if has some quoted compare with the previous list and set as retweet too
+tts = browser.find_elements_by_class_name('QuoteTweet-link')
+retweet_bin = list()
+for t in tts:
+    print("type: {}".format(t.get_attribute('data-conversation-id')))
+# tweetys = [tweet.text for tweet in tweets]
+# tweetys2 = [tweet.text.encode('utf-8') for tweet in tweets]
 
-def load_tweet_page(url):
-    tmp = list()
-    tweet = load_soup(url)
-    for a in tweet.findAll('a'):
-        if a['href'] == '#':
-            tmp.append(a.text)
-    return tmp
-
-
-def get_tweets(user, limit=1):
-    button = None
-    url = "https://mobile.twitter.com"
-    soup = load_soup(url + user)
-    user = load_user_info(soup)
-    tweets = list()
-    tweets_text = list()
-    tweets_timestamp = list()
-    tweet_dict = dict()
-    while True:
-        for tables in soup.findAll('table'):
-            if tables.has_attr('class'):
-                if tables['class'][0] == 'tweet':
-                    tweets_timestamp += load_tweet_page(url+tables['href'])
-                    tweets.append(tables['href'])
-
-        for div in soup.findAll('div'):
-            if div.has_attr('class') and div['class'][0] == 'dir-ltr':
-                tweets_text.append(div.text)
-
-        for link, text, time in zip(tweets, tweets_text, tweets_timestamp):
-            tweet_dict[link] = {'text': text, 'timestamp': time}
-
-        button = link_button(soup)
-
-        if len(tweets) >= limit or button is None:
-            break
-        else:
-            soup = load_soup(url+button)
-    user['tweets'] = tweet_dict
-    return user
-
-user = '/t3knus'
-print(get_tweets(user, 10))
+browser.close()
+#To Disk
+# pd.DataFrame(tweetys2).to_csv('/home/teknus/Documents/tcc/src/save.csv', index = False)
+# np.savetxt('base7.csv', tweetys2, delimiter=',', fmt='%10s')
